@@ -24,9 +24,11 @@ def get_staff_name(staff_id):
     if staff_id == 0:
         return jsonify({"success": True, "name": "Admin Manager"})
     conn = db.get_connection()
+    if not conn:
+        return jsonify({"success": False, "message": "Failed to connect to database."})
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT STAFF_NAME FROM STAFF WHERE STAFF_ID = :1", [staff_id])
+        cursor.execute("SELECT STAFF_NAME FROM STAFF WHERE STAFF_ID = %s", [staff_id])
         row = cursor.fetchone()
         if row:
             return jsonify({"success": True, "name": row[0]})
@@ -70,8 +72,6 @@ def delete_menu(item_id):
     return jsonify(db.delete_menu_item(item_id))
 
 # ================= DEALS ENDPOINTS =================
-# ================= DEALS ENDPOINTS =================
-
 @app.route('/api/base-deals', methods=['GET'])
 def get_base_deals():
     return jsonify({"success": True, "data": db.get_base_deals()})
@@ -98,18 +98,13 @@ def delete_base_deal(deal_id):
 
 @app.route('/api/menudeals/full', methods=['GET'])
 def get_full_menu_deals():
-
     try:
-
         deals = db.get_full_menu_deals()
-
         return jsonify({
             "success": True,
             "data": deals
         })
-
     except Exception as e:
-
         return jsonify({
             "success": False,
             "message": str(e)
@@ -256,12 +251,10 @@ def delete_delivery_manage():
 # ================= ISOLATED DASHBOARDS RENDERING =================
 @app.route('/api/admin/<role>', methods=['GET'])
 def admin(role):
-    # Backward compatibility for completely open views
     return jsonify({"success": True, "data": db.get_personalized_role_orders(role, 0)})
 
 @app.route('/api/admin/<role>/<int:staff_id>', methods=['GET'])
 def admin_personalized(role, staff_id):
-    # Fetches tasks linked directly to the authenticated employee identity
     return jsonify({"success": True, "data": db.get_personalized_role_orders(role, staff_id)})
 
 @app.route('/api/update-order-status', methods=['POST'])
